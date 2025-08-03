@@ -30,7 +30,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({ currentFilters, onFil
     } else {
       setSelectedPreset('');
     }
-  }, [currentFilters, hasUserSelectedPreset]);
+  }, [currentFilters, hasUserSelectedPreset, selectedPreset]);
 
   // Set initial dates to repository min/max when preset is "all" and repository dates are available
   useEffect(() => {
