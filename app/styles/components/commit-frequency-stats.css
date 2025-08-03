@@ -1,0 +1,109 @@
+/* CommitFrequencyStats Component Styles */
+
+.commit-frequency-stats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.commit-frequency-stat-box {
+  background-color: var(--color-surface-elevated);
+  box-shadow: var(--shadow-md);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-md);
+  border: 2px solid var(--color-border-primary);
+}
+
+.commit-frequency-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.commit-frequency-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.commit-frequency-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md);
+}
+
+@media (min-width: 640px) {
+  .commit-frequency-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.commit-frequency-stat-item {
+  text-align: center;
+  padding: var(--spacing-md);
+  background-color: var(--color-background-secondary);
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--color-border-primary);
+}
+
+.commit-frequency-stat-value {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.commit-frequency-stat-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .commit-frequency-stat-item {
+    background-color: var(--color-background-tertiary);
+  }
+}
+
+.dark .commit-frequency-stat-item {
+  background-color: var(--color-background-tertiary);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .commit-frequency-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .commit-frequency-stat-item {
+    padding: var(--spacing-sm);
+  }
+  
+  .commit-frequency-stat-value {
+    font-size: var(--font-size-xl);
+  }
+  
+  .commit-frequency-stat-label {
+    font-size: var(--font-size-xs);
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .commit-frequency-stat-box {
+    transition: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .commit-frequency-stat-box {
+    border: 2px solid var(--color-border);
+  }
+  
+  .commit-frequency-stat-item {
+    border: 1px solid var(--color-border);
+  }
+} 

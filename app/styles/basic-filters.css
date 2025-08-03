@@ -1,0 +1,125 @@
+/* BasicFilters Component Styles */
+
+.basic-filters {
+  padding: var(--spacing-md);
+  border: 2px solid var(--color-border-primary);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  background-color: var(--color-surface-elevated);
+}
+
+.basic-filters-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-md);
+  color: var(--color-text-primary);
+}
+
+.basic-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+@media (min-width: 640px) {
+  .basic-filters-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .basic-filters-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.basic-filters-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.basic-filters-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.basic-filters-label-info {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.basic-filters-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: var(--spacing-md);
+  align-items: end;
+}
+
+@media (min-width: 640px) {
+  .basic-filters-actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .basic-filters-actions-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.basic-filters-spacer {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .basic-filters-spacer {
+    display: block;
+  }
+}
+
+.basic-filters-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .basic-filters-grid {
+    grid-template-columns: repeat(1, 1fr);
+  }
+  
+  .basic-filters-actions-grid {
+    grid-template-columns: repeat(1, 1fr);
+  }
+  
+  .basic-filters-actions {
+    justify-content: center;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .basic-filters .form-control,
+  .basic-filters .btn {
+    transition: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .basic-filters {
+    border-width: 2px;
+  }
+  
+  .basic-filters .form-control {
+    border-width: 2px;
+  }
+  
+  .basic-filters .btn {
+    border: 2px solid currentColor;
+  }
+} 

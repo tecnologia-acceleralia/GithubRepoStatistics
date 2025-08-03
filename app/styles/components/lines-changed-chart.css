@@ -1,0 +1,33 @@
+/* LinesChangedChart Component Styles */
+
+.lines-changed-chart {
+  /* Inherits styles from .chart-container */
+  /* Additional specific styles can be added here if needed */
+}
+
+/* Chart Accessibility */
+.lines-changed-chart:focus-within {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Error state specific to lines changed chart */
+.lines-changed-chart-error {
+  color: var(--color-text-secondary);
+  text-align: center;
+  padding: var(--spacing-lg);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .lines-changed-chart {
+    border: 2px solid var(--color-border);
+  }
+}
+
+/* Screen reader support */
+@media (prefers-reduced-motion: reduce) {
+  .lines-changed-chart .chart-canvas-container {
+    transition: none;
+  }
+} 

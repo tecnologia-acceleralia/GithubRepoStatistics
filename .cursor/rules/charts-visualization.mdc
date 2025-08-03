@@ -1,0 +1,193 @@
+---
+description: Chart.js and data visualization component patterns
+alwaysApply: false
+---
+
+# Chart.js and Data Visualization Patterns
+
+## Chart.js Setup
+
+### Required Imports and Registration
+```typescript
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  TimeScale,
+} from 'chart.js';
+import { Line, Bar } from 'react-chartjs-2';
+import 'chartjs-adapter-date-fns';
+
+// Always register components before use
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  TimeScale
+);
+```
+
+## Chart Component Pattern
+
+### Component Structure
+```typescript
+interface ChartProps {
+  data: ChartDataType[];
+  title?: string;
+  height?: number;
+}
+
+const ChartComponent: React.FC<ChartProps> = ({ data, title, height = 400 }) => {
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('day');
+  
+  const processedData = useMemo(() => {
+    return processChartData(data, timePeriod);
+  }, [data, timePeriod]);
+  
+  const chartData = {
+    labels: processedData.map(item => item.date),
+    datasets: [{
+      label: 'Dataset Label',
+      data: processedData.map(item => item.value),
+      borderColor: 'rgb(59, 130, 246)',
+      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+      tension: 0.1,
+    }],
+  };
+  
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    // Chart-specific options
+  };
+  
+  return (
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+      <div style={{ height: `${height}px` }}>
+        <Line data={chartData} options={options} />
+      </div>
+    </div>
+  );
+};
+```
+
+## Data Processing Patterns
+
+### Time Period Grouping
+```typescript
+const groupDataByPeriod = (data: DataType[], period: TimePeriod) => {
+  if (period === 'day') return data;
+  
+  const grouped: Record<string, DataType> = {};
+  
+  data.forEach(item => {
+    const date = new Date(item.date);
+    let key: string;
+    
+    switch (period) {
+      case 'week':
+        const startOfWeek = new Date(date);
+        startOfWeek.setDate(date.getDate() - date.getDay());
+        key = startOfWeek.toISOString().split('T')[0];
+        break;
+      // Additional cases...
+    }
+    
+    if (!grouped[key]) {
+      grouped[key] = { date: key, value: 0 };
+    }
+    grouped[key].value += item.value;
+  });
+  
+  return Object.values(grouped).sort((a, b) => a.date.localeCompare(b.date));
+};
+```
+
+## Chart Configuration Best Practices
+
+### Responsive Design
+```typescript
+const options = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: 'top' as const,
+    },
+    title: {
+      display: !!title,
+      text: title,
+    },
+  },
+  scales: {
+    x: {
+      type: 'time' as const,
+      time: {
+        unit: getTimeUnit(timePeriod),
+        displayFormats: {
+          day: 'MMM dd',
+          week: 'MMM dd',
+          month: 'MMM yyyy',
+        },
+      },
+    },
+    y: {
+      beginAtZero: true,
+    },
+  },
+};
+```
+
+### Color Schemes
+- Use consistent colors across charts
+- Support dark mode with theme-aware colors
+- Use color palette: `rgb(59, 130, 246)` for blue
+- Use transparency for area fills: `rgba(59, 130, 246, 0.1)`
+
+### Performance Optimization
+- Use `useMemo` for expensive data processing
+- Debounce filter changes that affect chart data
+- Consider data sampling for large datasets
+- Use time-based grouping to reduce data points
+
+## Interactive Features
+
+### Time Period Selection
+```typescript
+const timePeriods: { value: TimePeriod; label: string }[] = [
+  { value: 'day', label: 'Daily' },
+  { value: 'week', label: 'Weekly' },
+  { value: 'month', label: 'Monthly' },
+];
+
+// Render period selector above chart
+<div className="flex gap-2 mb-4">
+  {timePeriods.map(period => (
+    <button
+      key={period.value}
+      onClick={() => setTimePeriod(period.value)}
+      className={`px-3 py-1 rounded ${
+        timePeriod === period.value 
+          ? 'bg-blue-600 text-white' 
+          : 'bg-gray-200 text-gray-800'
+      }`}
+    >
+      {period.label}
+    </button>
+  ))}
+</div>
+```
+
+### Tooltips and Information
+- Use [InfoIcon.tsx](mdc:components/InfoIcon.tsx) component for explanatory tooltips
+- Provide context for complex visualizations
+- Format tooltip data appropriately (dates, numbers, percentages)

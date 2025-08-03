@@ -1,0 +1,52 @@
+/* Configuration Button Styles */
+.config-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  background: var(--color-background-secondary);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-right: 12px;
+}
+
+.config-button:hover {
+  background: var(--color-background-tertiary);
+  transform: scale(1.05);
+}
+
+.config-button:active {
+  transform: scale(0.95);
+}
+
+.config-icon {
+  transition: transform 0.2s ease;
+}
+
+.config-button:hover .config-icon {
+  transform: rotate(90deg);
+}
+
+/* Header Controls Container */
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .config-button {
+    width: 36px;
+    height: 36px;
+    margin-right: 8px;
+  }
+  
+  .header-controls {
+    gap: 6px;
+  }
+} 

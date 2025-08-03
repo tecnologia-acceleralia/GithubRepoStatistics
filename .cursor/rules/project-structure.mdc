@@ -1,0 +1,76 @@
+---
+description: Project structure and architecture guide for Local Git Repository Statistics Next.js application
+alwaysApply: true
+---
+
+# Local Git Repository Statistics - Project Structure
+
+This is a **Next.js 15** application with **TypeScript** and **App Router** for analyzing local Git repositories.
+
+## Core Architecture
+
+- **Frontend**: React 19 with TypeScript, client-side components
+- **Backend**: Next.js API routes using simple-git for Git operations
+- **Styling**: Dark mode support
+- **Visualization**: Chart.js with react-chartjs-2
+- **State Management**: Local React state with useState/useEffect
+
+## File Structure
+
+### Application Core
+- [app/page.tsx](mdc:app/page.tsx) - Main application component with repository selection and statistics display
+- [app/layout.tsx](mdc:app/layout.tsx) - Root layout with fonts and metadata
+- [app/globals.css](mdc:app/globals.css) - Global styles
+
+### API Routes (`/app/api/`)
+- [app/api/stats/route.ts](mdc:app/api/stats/route.ts) - Main statistics generation using simple-git
+- [app/api/validate-repo/route.ts](mdc:app/api/validate-repo/route.ts) - Repository validation
+- [app/api/csv-export/route.ts](mdc:app/api/csv-export/route.ts) - CSV export functionality
+- [app/api/analytics/route.ts](mdc:app/api/analytics/route.ts) - Advanced analytics endpoints
+
+### Components (`/components/`)
+- [components/RepositorySelector.tsx](mdc:components/RepositorySelector.tsx) - Repository selection with recent repos
+- [components/ContributorStatsTable.tsx](mdc:components/ContributorStatsTable.tsx) - Tabular contributor statistics
+- [components/CommitActivityChart.tsx](mdc:components/CommitActivityChart.tsx) - Time-based commit visualization
+- [components/LinesChangedChart.tsx](mdc:components/LinesChangedChart.tsx) - Lines added/deleted visualization
+- [components/CommitFrequencyStats.tsx](mdc:components/CommitFrequencyStats.tsx) - Frequency statistics display
+- [components/BasicFilters.tsx](mdc:components/BasicFilters.tsx) - Date and contributor filters
+- [components/AdvancedFilters.tsx](mdc:components/AdvancedFilters.tsx) - Advanced filtering options
+- [components/PerformanceDashboard.tsx](mdc:components/PerformanceDashboard.tsx) - Performance metrics dashboard
+- [components/TeamHealthMonitor.tsx](mdc:components/TeamHealthMonitor.tsx) - Team collaboration metrics
+- [components/TrendAnalysisChart.tsx](mdc:components/TrendAnalysisChart.tsx) - Trend analysis visualization
+- [components/InfoIcon.tsx](mdc:components/InfoIcon.tsx) - Tooltip information component
+
+## Key Data Structures
+
+### Repository Statistics
+```typescript
+interface RepoStatsData {
+  totalCommits: number;
+  contributors: Record<string, ContributorStatsData>;
+  commitActivity: CommitActivityData[];
+  allContributors: string[];
+  remoteUrl?: string;
+  firstCommitDate?: string;
+  lastCommitDate?: string;
+}
+```
+
+### Contributor Data
+```typescript
+interface ContributorStatsData {
+  commits: number;
+  linesAdded: number;
+  linesDeleted: number;
+  filesChanged: number;
+}
+```
+
+## Development Patterns
+
+- All React components are **client components** (`'use client'`)
+- Use **TypeScript path aliases**: `@/components/*`, `@/app/*`
+- API routes follow **POST pattern** for complex data
+- Components handle their own loading/error states
+- **Responsive design** with mobile-first approach
+- **Dark mode support** throughout the application

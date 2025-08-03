@@ -1,0 +1,143 @@
+---
+description: CSS and UI styling patterns for consistent design
+alwaysApply: false
+---
+
+# CSS and UI Styling Patterns
+
+## Design System
+
+### Color Palette
+- **Primary**: Blue (`bg-blue-600`, `text-blue-600`, `border-blue-500`)
+- **Success**: Green (`bg-green-600`, `text-green-600`)  
+- **Error**: Red (`bg-red-600`, `text-red-600`)
+- **Gray Scale**: `gray-50` to `gray-900` for backgrounds and text
+- **Dark Mode**: Always provide dark variants
+
+### Typography
+- **Headers**: `text-xl font-semibold` or `text-2xl font-bold`
+- **Code**: `font-mono` with `bg-gray-200 dark:bg-gray-700` background
+- **Small text**: `text-sm` for labels and secondary information
+
+## Component Styling Patterns
+
+### Cards and Containers
+```html
+<div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
+  <!-- Card content -->
+</div>
+```
+
+### Buttons
+```html
+<!-- Primary Button -->
+<button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition duration-150 ease-in-out">
+  Button Text
+</button>
+
+<!-- Secondary Button -->  
+<button className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition duration-150 ease-in-out">
+  Secondary
+</button>
+```
+
+### Form Elements
+```html
+<!-- Input Field -->
+<input 
+  className="flex-grow p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+  type="text"
+/>
+
+<!-- Select Dropdown -->
+<select className="p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+  <option>Option</option>
+</select>
+```
+
+## Dark Mode Support
+
+### Implementation Pattern
+- Always provide dark mode variants for all interactive elements
+- Use `dark:` prefix for dark mode styles
+- **Backgrounds**: `bg-white dark:bg-gray-800` for main containers
+- **Text**: `text-gray-900 dark:text-gray-100` for primary text  
+- **Borders**: `border-gray-300 dark:border-gray-600`
+
+### Color Mapping
+- Light backgrounds → `gray-800`, `gray-900` in dark mode
+- Dark text → `gray-100`, `gray-200` in dark mode  
+- Light borders → `gray-600`, `gray-700` in dark mode
+
+## Responsive Design
+
+### Breakpoint Usage
+- **Mobile First**: Base styles for mobile, use `sm:`, `md:`, `lg:` for larger screens
+- **Layout**: `flex flex-col lg:flex-row` for responsive layouts
+- **Text**: `text-center lg:text-left` for responsive alignment
+- **Spacing**: `p-6 sm:p-12 md:p-24` for responsive padding
+
+### Grid and Flex Patterns
+```html
+<!-- Responsive Grid -->
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  <!-- Grid items -->
+</div>
+
+<!-- Responsive Flex -->
+<div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+  <!-- Flex items -->
+</div>
+```
+
+## State-Based Styling
+
+### Loading States
+```html
+<button disabled={isLoading} className="... disabled:opacity-50 disabled:cursor-not-allowed">
+  {isLoading ? 'Loading...' : 'Action'}
+</button>
+```
+
+### Error States
+```html
+<div className="bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 px-4 py-3 rounded">
+  <strong className="font-bold">Error:</strong>
+  <span className="block sm:inline"> {errorMessage}</span>
+</div>
+```
+
+### Success States  
+```html
+<p className="text-green-600 dark:text-green-400 text-sm">
+  Operation completed successfully!
+</p>
+```
+
+## Animation and Transitions
+
+### Standard Transitions
+- **Buttons**: `transition duration-150 ease-in-out`
+- **Color Changes**: `transition-colors duration-200`
+- **Layout Changes**: `transition-all duration-300`
+
+### Hover Effects
+- **Buttons**: `hover:bg-blue-700` (darken primary color)
+- **Cards**: `hover:shadow-lg` (increase shadow)
+- **Links**: `hover:text-blue-800 dark:hover:text-blue-300`
+
+## Layout Patterns
+
+### Main Container
+```html
+<main className="flex min-h-screen flex-col items-center justify-start p-6 sm:p-12 md:p-24 bg-gray-50 dark:bg-gray-900">
+  <div className="w-full max-w-5xl">
+    <!-- Content -->
+  </div>
+</main>
+```
+
+### Section Spacing
+- Use `space-y-8` for vertical spacing between sections
+- Use `mb-6` or `mb-8` for consistent bottom margins
+- Use `gap-4` or `gap-6` for flex/grid spacing

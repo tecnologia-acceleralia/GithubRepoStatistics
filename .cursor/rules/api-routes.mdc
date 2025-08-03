@@ -1,0 +1,94 @@
+---
+description: Next.js API routes patterns and best practices for Git operations and data processing
+globs: app/api/**/route.ts
+alwaysApply: false
+---
+
+# Next.js API Routes Patterns
+
+## Route Structure
+- Use **App Router** pattern: `app/api/[endpoint]/route.ts`
+- Export named functions: `GET`, `POST`, `PUT`, `DELETE`
+- Use `NextRequest` and `NextResponse` types
+
+## Standard API Route Pattern
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import simpleGit from 'simple-git';
+
+export async function POST(request: NextRequest) {
+  try {
+    const { repoPath, filters } = await request.json();
+    
+    // Validation
+    if (!repoPath) {
+      return NextResponse.json(
+        { error: 'Repository path is required' },
+        { status: 400 }
+      );
+    }
+    
+    // Business logic
+    const result = await processRepository(repoPath, filters);
+    
+    return NextResponse.json(result);
+  } catch (error: unknown) {
+    console.error('API Error:', error);
+    return NextResponse.json(
+      { error: `Failed to process: ${error instanceof Error ? error.message : 'Unknown error'}` },
+      { status: 500 }
+    );
+  }
+}
+```
+
+## Git Operations with simple-git
+- Import: `import simpleGit, { SimpleGit } from 'simple-git';`
+- Initialize: `const git: SimpleGit = simpleGit(repoPath);`
+- Use try/catch for all Git operations
+- Check repository validity before operations
+
+## Error Handling
+- Always return proper HTTP status codes
+- Consistent error response format: `{ error: string }`
+- Log errors with `console.error` for debugging
+- Handle `simple-git` specific errors appropriately
+
+## Data Processing
+- Define TypeScript interfaces for all data structures
+- Use `Set` for uniqueness, convert to arrays for JSON response
+- Process dates consistently (ISO format: YYYY-MM-DD)
+- Handle large datasets efficiently (streaming for CSV exports)
+
+## Response Patterns
+### Success Response
+```typescript
+return NextResponse.json({
+  data: processedData,
+  metadata: { total: count, processed: new Date().toISOString() }
+});
+```
+
+### Error Response
+```typescript
+return NextResponse.json(
+  { error: 'Descriptive error message' },
+  { status: 400 | 404 | 500 }
+);
+```
+
+### File Downloads (CSV)
+```typescript
+return new NextResponse(csvContent, {
+  headers: {
+    'Content-Type': 'text/csv',
+    'Content-Disposition': `attachment; filename="${filename}"`,
+  },
+});
+```
+
+## Validation
+- Validate all input parameters
+- Check file system paths exist and are accessible
+- Verify Git repository validity before processing
+- Sanitize user inputs to prevent path traversal

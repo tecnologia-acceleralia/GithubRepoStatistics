@@ -1,0 +1,22 @@
+/* Import our custom CSS system */
+@import './styles/main.css';
+
+/* Base styles for the application */
+body {
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-sans);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  body {
+    background: var(--color-background);
+    color: var(--color-text-primary);
+  }
+}
+
+.dark body {
+  background: var(--color-background);
+  color: var(--color-text-primary);
+}

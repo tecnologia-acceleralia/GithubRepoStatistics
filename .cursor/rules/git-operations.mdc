@@ -1,0 +1,220 @@
+---
+description: Git operations using simple-git library patterns and best practices
+alwaysApply: false
+---
+
+# Git Operations with simple-git
+
+## Library Setup and Usage
+
+### Import and Initialization
+```typescript
+import simpleGit, { SimpleGit, LogResult } from 'simple-git';
+import path from 'path';
+import fs from 'fs';
+
+// Initialize git for specific repository
+const git: SimpleGit = simpleGit(repoPath);
+```
+
+### Repository Validation
+```typescript
+async function validateRepository(repoPath: string): Promise<boolean> {
+  try {
+    if (!fs.existsSync(repoPath)) {
+      return false;
+    }
+    
+    const git = simpleGit(repoPath);
+    await git.checkIsRepo();
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+```
+
+## Commit Analysis Patterns
+
+### Getting Commit History with Statistics
+```typescript
+const logOptions = {
+  from: filters.startDate || undefined,
+  to: filters.endDate || undefined,
+  format: {
+    hash: '%H',
+    date: '%ai',
+    message: '%s',
+    refs: '%D',
+    body: '%b',
+    author_name: '%aN',
+    author_email: '%ae',
+  },
+};
+
+const logResult: LogResult = await git.log(logOptions);
+```
+
+### Processing Commit Statistics
+```typescript
+interface ContributorStats {
+  commits: number;
+  linesAdded: number;
+  linesDeleted: number;
+  filesChanged: Set<string>;
+}
+
+const contributors: Record<string, ContributorStats> = {};
+
+for (const commit of logResult.all) {
+  const author = commit.author_name;
+  
+  if (!contributors[author]) {
+    contributors[author] = {
+      commits: 0,
+      linesAdded: 0,
+      linesDeleted: 0,
+      filesChanged: new Set(),
+    };
+  }
+  
+  contributors[author].commits++;
+  
+  // Get diff statistics for this commit
+  const diffSummary = await git.diffSummary([`${commit.hash}^`, commit.hash]);
+  // Process diff data...
+}
+```
+
+## Advanced Git Operations
+
+### Getting Remote Information
+```typescript
+async function getRemoteUrl(git: SimpleGit): Promise<string | undefined> {
+  try {
+    const remotes = await git.getRemotes(true);
+    const origin = remotes.find(remote => remote.name === 'origin');
+    return origin?.refs?.fetch;
+  } catch (error) {
+    console.warn('Could not fetch remote URL:', error);
+    return undefined;
+  }
+}
+```
+
+### Date Range Filtering
+```typescript
+async function getCommitsInDateRange(
+  git: SimpleGit, 
+  startDate?: string, 
+  endDate?: string,
+  author?: string
+) {
+  const options: any = {
+    format: LOG_FORMAT,
+  };
+  
+  if (startDate) options.from = startDate;
+  if (endDate) options.to = endDate;
+  if (author) options.author = author;
+  
+  return await git.log(options);
+}
+```
+
+### File Change Analysis
+```typescript
+async function analyzeFileChanges(git: SimpleGit, commit: CommitResult) {
+  try {
+    const diffSummary = await git.diffSummary([`${commit.hash}^`, commit.hash]);
+    
+    return {
+      filesChanged: diffSummary.files.length,
+      insertions: diffSummary.insertions,
+      deletions: diffSummary.deletions,
+      files: diffSummary.files.map(file => ({
+        file: file.file,
+        changes: file.changes,
+        insertions: file.insertions,
+        deletions: file.deletions,
+        binary: file.binary,
+      })),
+    };
+  } catch (error) {
+    console.warn(`Could not get diff for commit ${commit.hash}:`, error);
+    return null;
+  }
+}
+```
+
+## Error Handling Patterns
+
+### Repository Access Errors
+```typescript
+try {
+  const git = simpleGit(repoPath);
+  await git.checkIsRepo();
+} catch (error) {
+  if (error instanceof Error) {
+    if (error.message.includes('not a git repository')) {
+      throw new Error(`Path is not a valid Git repository: ${repoPath}`);
+    }
+    if (error.message.includes('does not exist')) {
+      throw new Error(`Repository path does not exist: ${repoPath}`);
+    }
+  }
+  throw new Error(`Failed to access repository: ${error}`);
+}
+```
+
+### Commit Processing Errors
+```typescript
+const processCommit = async (commit: CommitResult) => {
+  try {
+    // Process commit...
+    return result;
+  } catch (error) {
+    console.warn(`Skipping commit ${commit.hash} due to error:`, error);
+    return null; // Skip problematic commits
+  }
+};
+```
+
+## Performance Considerations
+
+### Large Repository Handling
+- Use pagination for very large commit histories
+- Process commits in batches to avoid memory issues
+- Consider time-based filtering to limit scope
+- Use streaming for CSV exports of large datasets
+
+### Caching Strategies
+- Cache repository metadata (remote URL, first/last commit dates)
+- Consider caching processed statistics for unchanged repositories
+- Use memoization for expensive calculations
+
+## Data Processing Best Practices
+
+### Date Handling
+```typescript
+// Normalize dates to YYYY-MM-DD format
+const normalizeDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toISOString().split('T')[0];
+};
+```
+
+### Contributor Normalization
+```typescript
+// Handle different email formats for same contributor
+const normalizeContributor = (name: string, email: string): string => {
+  // Could implement email domain mapping, name cleaning, etc.
+  return name.trim();
+};
+```
+
+### Statistics Aggregation
+- Use `Set` for unique file tracking, convert to count for JSON
+- Aggregate daily statistics for time-based charts
+- Handle merge commits appropriately (may want to exclude)
+- Consider different commit types (regular, merge, revert)

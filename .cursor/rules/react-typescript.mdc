@@ -1,0 +1,86 @@
+---
+description: React and TypeScript patterns for component development and API integration
+globs: *.tsx,*.ts
+alwaysApply: false
+---
+
+# React + TypeScript Patterns
+
+## Component Structure
+
+### Client Components
+- Always start with `'use client';` directive for interactive components
+- Use React 19 patterns with modern hooks
+- Prefer functional components with TypeScript interfaces
+
+### Props Interface Pattern
+```typescript
+interface ComponentNameProps {
+  requiredProp: string;
+  optionalProp?: boolean;
+  onEventHandler: (param: Type) => void;
+}
+
+const ComponentName: React.FC<ComponentNameProps> = ({ requiredProp, optionalProp = false, onEventHandler }) => {
+  // Component logic
+};
+```
+
+### State Management
+- Use `useState` with explicit types: `useState<Type | null>(null)`
+- Use `useEffect` for data fetching and side effects
+- Handle loading states: `isLoading`, `isValidating`, etc.
+- Handle error states: `error`, `setError` with string | null type
+
+### Event Handlers
+- Prefix with `handle`: `handleRepositorySelected`, `handleFilterChange`
+- Use proper TypeScript event types: `React.ChangeEvent<HTMLInputElement>`
+- For async operations, use proper try/catch error handling
+
+## API Integration
+
+### Fetch Patterns
+```typescript
+const fetchData = async () => {
+  setIsLoading(true);
+  setError(null);
+  
+  try {
+    const response = await fetch('/api/endpoint', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    
+    const result = await response.json();
+    
+    if (response.ok) {
+      setData(result);
+    } else {
+      setError(result.error || 'Operation failed');
+    }
+  } catch (err: unknown) {
+    setError(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+  } finally {
+    setIsLoading(false);  
+  }
+};
+```
+
+### Type Safety
+- Always define interfaces for API responses
+- Use `unknown` for catch blocks, then type guard to `Error`
+- Prefer explicit return types for complex functions
+- Use optional chaining (`?.`) and nullish coalescing (`??`) for safety
+
+## Styling
+
+- Use responsive classes: `sm:`, `md:`, `lg:`
+- Dark mode variants: `dark:bg-gray-800`, `dark:text-gray-200`
+- Use transition classes for smooth interactions: `transition duration-150 ease-in-out`
+
+## Import Organization
+1. React imports first
+2. Third-party libraries
+3. Local components (using `@/` alias)
+4. Types and interfaces (if separate files)
