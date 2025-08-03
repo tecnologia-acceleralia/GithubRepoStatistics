@@ -111,7 +111,7 @@ const LinesChangedChart: React.FC<LinesChangedChartProps> = ({ commitActivity, f
 
   const groupedData = useMemo(() => {
     return groupDataByPeriod(commitActivity, selectedPeriod, firstDayOfWeek);
-  }, [commitActivity, selectedPeriod]);
+  }, [commitActivity, selectedPeriod, firstDayOfWeek]);
 
   if (!commitActivity || commitActivity.length === 0) {
     return <p className="lines-changed-chart-error">No lines changed data available for the selected period or filters.</p>;

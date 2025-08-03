@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import InfoIcon from './InfoIcon';
 import SortIcon from './SortIcon';
 import TrendAnalysisChart from './TrendAnalysisChart';
@@ -100,13 +100,7 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({ repoPath, f
   const [error, setError] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState<'overview' | 'contributors' | 'trends' | 'health' | 'issues' | 'insights'>('overview');
 
-  useEffect(() => {
-    if (repoPath) {
-      fetchAnalytics();
-    }
-  }, [repoPath, filters]);
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -132,7 +126,13 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({ repoPath, f
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [repoPath, filters]);
+
+  useEffect(() => {
+    if (repoPath) {
+      fetchAnalytics();
+    }
+  }, [fetchAnalytics, repoPath]);
 
   if (isLoading) {
     return (

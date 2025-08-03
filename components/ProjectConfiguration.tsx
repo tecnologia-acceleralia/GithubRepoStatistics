@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import InfoIcon from './InfoIcon';
 
 interface ProjectConfigurationProps {
@@ -41,15 +41,7 @@ const ProjectConfiguration: React.FC<ProjectConfigurationProps> = ({
   const [editingExcludedUser, setEditingExcludedUser] = useState<number | null>(null);
   const [editingAlias, setEditingAlias] = useState<{authorIndex: number, aliasIndex: number} | null>(null);
 
-  // Load configuration and contributors when component opens
-  useEffect(() => {
-    if (isOpen) {
-      loadConfiguration();
-      loadContributors();
-    }
-  }, [isOpen, repoPath]);
-
-  const loadConfiguration = async () => {
+  const loadConfiguration = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
@@ -79,9 +71,9 @@ const ProjectConfiguration: React.FC<ProjectConfigurationProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [repoPath]);
 
-  const loadContributors = async () => {
+  const loadContributors = useCallback(async () => {
     try {
       const response = await fetch('/api/project-config', {
         method: 'POST',
@@ -106,7 +98,15 @@ const ProjectConfiguration: React.FC<ProjectConfigurationProps> = ({
       console.error('Error loading contributors:', err);
       setContributors([]);
     }
-  };
+  }, [repoPath]);
+
+  // Load configuration and contributors when component opens
+  useEffect(() => {
+    if (isOpen) {
+      loadConfiguration();
+      loadContributors();
+    }
+  }, [isOpen, repoPath, loadConfiguration, loadContributors]);
 
   const saveConfiguration = async () => {
     setIsSaving(true);

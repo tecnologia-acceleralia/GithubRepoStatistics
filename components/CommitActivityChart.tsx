@@ -107,7 +107,7 @@ const CommitActivityChart: React.FC<CommitActivityChartProps> = ({ commitActivit
 
   const groupedData = useMemo(() => {
     return groupDataByPeriod(commitActivity, selectedPeriod, firstDayOfWeek);
-  }, [commitActivity, selectedPeriod]);
+  }, [commitActivity, selectedPeriod, firstDayOfWeek]);
 
   // Calculate average commits per period
   const averageCommits = useMemo(() => {

@@ -241,9 +241,9 @@ const TrendAnalysisChart: React.FC<TrendAnalysisChartProps> = ({ commitActivity,
         },
         tooltip: {
           callbacks: {
-            afterLabel: (tooltipItem: any) => {
+            afterLabel: (tooltipItem: { datasetIndex: number; parsed: { x: string | number } }) => {
               if (tooltipItem.datasetIndex === 2 && trendAnalysis.anomalies.length > 0) { // Anomalies dataset
-                const anomaly = trendAnalysis.anomalies.find(a => a.date === tooltipItem.parsed.x);
+                const anomaly = trendAnalysis.anomalies.find(a => a.date === String(tooltipItem.parsed.x));
                 return anomaly ? `${anomaly.type === 'high' ? '🔥' : '❄️'} ${anomaly.type} activity anomaly` : '';
               }
               return '';

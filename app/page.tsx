@@ -1,6 +1,6 @@
 	'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import RepositorySelector from '@/components/RepositorySelector';
 import ContributorStatsTable from '@/components/ContributorStatsTable';
 import CommitActivityChart from '@/components/CommitActivityChart';
@@ -80,7 +80,7 @@ export default function Home() {
       contributors: filteredContributors,
       totalCommits: filteredTotalCommits,
     };
-  }, [repoStats, filters, repoStats?.globalConfig]);
+  }, [repoStats, filters]);
 
   // Memoized filtered data for advanced stats - only affected by date filters, not contributor filters
   const advancedFilteredStats = useMemo(() => {
@@ -112,7 +112,7 @@ export default function Home() {
       contributors: allContributors,
       totalCommits: filteredTotalCommits,
     };
-  }, [repoStats, filters.startDate, filters.endDate, repoStats?.globalConfig]); // Only depend on date filters
+  }, [repoStats, filters.startDate, filters.endDate]); // Only depend on date filters
 
   const handleRepositorySelected = (path: string) => {
     setSelectedRepoPath(path);
@@ -175,7 +175,7 @@ export default function Home() {
     }
   };
 
-  const fetchStats = async (repoPath: string, currentFilters?: typeof filters, isFilterChange: boolean = false) => {
+  const fetchStats = useCallback(async (repoPath: string, currentFilters?: typeof filters, isFilterChange: boolean = false) => {
     if (!repoPath) return;
 
     if (isFilterChange) {
@@ -214,7 +214,7 @@ export default function Home() {
         setIsLoadingStats(false);
       }
     }
-  };
+  }, []);
 
   const handleDownloadCsv = async () => {
     if (!selectedRepoPath) return;
@@ -268,7 +268,7 @@ export default function Home() {
     if (selectedRepoPath) {
       fetchStats(selectedRepoPath, {}); // Fetch all data initially
     }
-  }, [selectedRepoPath]);
+  }, [selectedRepoPath, fetchStats]);
 
   return (
     <main className="main-container">
