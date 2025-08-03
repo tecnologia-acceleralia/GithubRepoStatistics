@@ -4,6 +4,37 @@ import React from 'react';
 import InfoIcon from './InfoIcon';
 import MoreInfoButton from './MoreInfoButton';
 
+interface ContributorPerformance {
+  name: string;
+  performanceRating: 'below_average' | 'average' | 'above_average' | 'exceptional';
+  productivity: {
+    commitsPerWeek: number;
+    linesPerCommit: number;
+    filesPerCommit: number;
+    consistencyScore: number;
+    activityPattern: 'regular' | 'burst' | 'irregular';
+  };
+  trends: {
+    last30Days: 'improving' | 'declining' | 'stable';
+  };
+  relativeToPeers: {
+    commitRank: number;
+    productivityRank: number;
+    consistencyRank: number;
+  };
+}
+
+interface DetectedIssue {
+  type: 'low_activity' | 'single_contributor_dependency' | 'irregular_commits' | 'large_commits' | 'team_shrinking' | 'knowledge_hoarding';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  title: string;
+  description: string;
+  affectedPeriod: { start: string; end: string };
+  affectedContributors: string[];
+  impact: string;
+  suggestions: string[];
+}
+
 interface TeamHealthMetrics {
   overallHealth: number; // 0-100
   riskLevel: 'low' | 'medium' | 'high' | 'critical';
@@ -56,8 +87,8 @@ interface TeamHealthMonitorProps {
       busFactor: number;
     };
   };
-  contributors: any[];
-  issues: any[];
+  contributors: ContributorPerformance[];
+  issues: DetectedIssue[];
 }
 
 const TeamHealthMonitor: React.FC<TeamHealthMonitorProps> = ({ 
@@ -478,9 +509,24 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({ recommendation 
 };
 
 // Helper functions
-function analyzeTeamHealth(projectHealth: any, contributors: any[], issues: any[]): TeamHealthMetrics {
+function analyzeTeamHealth(projectHealth: TeamHealthMonitorProps['projectHealth'], contributors: ContributorPerformance[], issues: DetectedIssue[]): TeamHealthMetrics {
   const alerts: Alert[] = [];
   const recommendations: Recommendation[] = [];
+
+  // Add alerts from detected issues
+  issues.forEach((issue, index) => {
+    alerts.push({
+      id: `issue-${index}`,
+      type: 'risk',
+      severity: issue.severity === 'critical' ? 'critical' : 
+                issue.severity === 'high' ? 'error' : 
+                issue.severity === 'medium' ? 'warning' : 'info',
+      title: issue.title,
+      message: issue.description,
+      actionable: true,
+      suggestedActions: issue.suggestions
+    });
+  });
 
   // Analyze bus factor risk
   if (projectHealth.teamCollaboration.busFactor <= 1) {
@@ -582,8 +628,8 @@ function analyzeTeamHealth(projectHealth: any, contributors: any[], issues: any[
   }
 
   // Determine knowledge distribution
-  const totalCommits = contributors.reduce((sum, c) => sum + c.commits, 0);
-  const topContributorCommits = Math.max(...contributors.map(c => c.commits));
+  const totalCommits = contributors.reduce((sum, c) => sum + c.productivity.commitsPerWeek, 0);
+  const topContributorCommits = Math.max(...contributors.map(c => c.productivity.commitsPerWeek));
   const topContributorPercentage = totalCommits > 0 ? topContributorCommits / totalCommits : 0;
 
   let knowledgeDistribution: 'centralized' | 'distributed' | 'fragmented' = 'distributed';

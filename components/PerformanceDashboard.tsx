@@ -8,6 +8,14 @@ import TeamHealthMonitor from './TeamHealthMonitor';
 import MoreInfoButton from './MoreInfoButton';
 
 // Interfaces matching the analytics API
+interface PerformanceMetrics {
+  commits: number;
+  linesAdded: number;
+  linesDeleted: number;
+  filesChanged: number;
+  date: string;
+}
+
 interface ContributorPerformance {
   name: string;
   performanceRating: 'below_average' | 'average' | 'above_average' | 'exceptional';
@@ -20,8 +28,8 @@ interface ContributorPerformance {
   };
   trends: {
     last30Days: 'improving' | 'declining' | 'stable';
-    peakPerformancePeriod?: { start: string; end: string; metrics: any };
-    lowPerformancePeriod?: { start: string; end: string; metrics: any };
+    peakPerformancePeriod?: { start: string; end: string; metrics: PerformanceMetrics };
+    lowPerformancePeriod?: { start: string; end: string; metrics: PerformanceMetrics };
   };
   relativeToPeers: {
     commitRank: number;
@@ -59,7 +67,7 @@ interface DetectedIssue {
   affectedContributors: string[];
   impact: string;
   suggestions: string[];
-  metrics: any;
+  metrics: PerformanceMetrics;
 }
 
 interface AnalyticsData {
@@ -287,7 +295,7 @@ const OverviewTab: React.FC<{ analytics: AnalyticsData }> = ({ analytics }) => {
     return analysis;
   };
 
-  const getVelocityAnalysis = (velocity: any) => {
+  const getVelocityAnalysis = (velocity: ProjectHealth['developmentVelocity']) => {
     const status = getVelocityStatus(velocity.trend, velocity.changePercent);
     
     let analysis = `<h5>Velocity Analysis</h5>`;
@@ -318,7 +326,7 @@ const OverviewTab: React.FC<{ analytics: AnalyticsData }> = ({ analytics }) => {
     return analysis;
   };
 
-  const getTeamCollaborationAnalysis = (collaboration: any) => {
+  const getTeamCollaborationAnalysis = (collaboration: ProjectHealth['teamCollaboration']) => {
     const status = getBusFactorStatus(collaboration.busFactor);
     
     let analysis = `<h5>Collaboration Analysis</h5>`;
@@ -349,7 +357,7 @@ const OverviewTab: React.FC<{ analytics: AnalyticsData }> = ({ analytics }) => {
     return analysis;
   };
 
-  const getCodeQualityAnalysis = (codeQuality: any) => {
+  const getCodeQualityAnalysis = (codeQuality: ProjectHealth['codeQuality']) => {
     const status = getCommitSizeStatus(codeQuality.averageCommitSize);
     
     let analysis = `<h5>Code Quality Analysis</h5>`;
@@ -380,7 +388,7 @@ const OverviewTab: React.FC<{ analytics: AnalyticsData }> = ({ analytics }) => {
     return analysis;
   };
 
-  const getProductivityAnalysis = (benchmarks: any) => {
+  const getProductivityAnalysis = (benchmarks: AnalyticsData['benchmarks']) => {
     const status = getProductivityStatus(benchmarks.teamProductivityScore);
     
     let analysis = `<h5>Productivity Analysis</h5>`;
@@ -412,7 +420,7 @@ const OverviewTab: React.FC<{ analytics: AnalyticsData }> = ({ analytics }) => {
     return analysis;
   };
 
-  const getBenchmarkAnalysis = (benchmarks: any) => {
+  const getBenchmarkAnalysis = (benchmarks: AnalyticsData['benchmarks']) => {
     const status = getBenchmarkStatus(benchmarks.averageLinesPerCommit);
     
     let analysis = `<h5>Benchmarks Analysis</h5>`;
@@ -651,7 +659,7 @@ const OverviewTab: React.FC<{ analytics: AnalyticsData }> = ({ analytics }) => {
 
 // Contributors Tab Component
 const ContributorsTab: React.FC<{ analytics: AnalyticsData }> = ({ analytics }) => {
-  const [sortField, setSortField] = useState<'name' | 'performance' | 'productivity' | 'consistency'>('name');
+  const [sortField, setSortField] = useState<'name' | 'performance' | 'productivity' | 'pattern' | 'trend' | 'commitRank' | 'productivityRank' | 'consistencyRank'>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const getTrendEmoji = (trend: string) => {
@@ -682,7 +690,7 @@ const ContributorsTab: React.FC<{ analytics: AnalyticsData }> = ({ analytics }) 
 
   const getSortedContributors = () => {
     const sorted = [...analytics.contributors].sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: number | string, bValue: number | string;
       
       switch (sortField) {
         case 'name':
@@ -742,7 +750,7 @@ const ContributorsTab: React.FC<{ analytics: AnalyticsData }> = ({ analytics }) 
           </div>
 
           <p className="contributors-subtitle">
-            Detailed breakdown of each contributor's productivity, consistency, and trends
+            Detailed breakdown of each contributor&apos;s productivity, consistency, and trends
           </p>
         </div>
         <div className="contributors-table-container">
@@ -921,7 +929,7 @@ const IssuesTab: React.FC<{ analytics: AnalyticsData }> = ({ analytics }) => {
         <div className="issues-no-issues-icon">✅</div>
         <h3 className="issues-no-issues-title">No Issues Detected</h3>
         <p className="issues-no-issues-message">
-          Great! The analysis didn't find any significant issues with your project's development patterns.
+          Great! The analysis didn&apos;t find any significant issues with your project&apos;s development patterns.
         </p>
       </div>
     );
@@ -1038,7 +1046,7 @@ const InsightsTab: React.FC<{ analytics: AnalyticsData }> = ({ analytics }) => {
 };
 
 // Trends Tab Component
-const TrendsTab: React.FC<{ commitActivity?: any[]; firstDayOfWeek?: 'sunday' | 'monday' }> = ({ commitActivity, firstDayOfWeek = 'sunday' }) => {
+const TrendsTab: React.FC<{ commitActivity?: { date: string; count: number; contributorCount: number; linesAdded: number; linesDeleted: number }[]; firstDayOfWeek?: 'sunday' | 'monday' }> = ({ commitActivity, firstDayOfWeek = 'sunday' }) => {
   if (!commitActivity || commitActivity.length === 0) {
     return (
       <div className="trends-warning">

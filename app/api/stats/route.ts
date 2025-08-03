@@ -134,7 +134,7 @@ async function loadProjectConfig(repoPath: string): Promise<ProjectConfig> {
     
     const configData = await fsPromises.readFile(configFilePath, 'utf-8');
     return JSON.parse(configData);
-  } catch (error) {
+  } catch {
     // Return default config if file doesn't exist or can't be read
     return { groupedAuthors: [], excludedUsers: [] };
   }
@@ -148,7 +148,7 @@ async function loadGlobalConfig(): Promise<{ firstDayOfWeek: 'sunday' | 'monday'
     
     const configData = await fsPromises.readFile(configFilePath, 'utf-8');
     return JSON.parse(configData);
-  } catch (error) {
+  } catch {
     // Return default config if file doesn't exist or can't be read
     return { firstDayOfWeek: 'sunday' };
   }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import simpleGit, { SimpleGit, LogResult } from 'simple-git';
+import simpleGit, { SimpleGit } from 'simple-git';
 import path from 'path';
 import fs from 'fs';
 
@@ -120,10 +120,10 @@ function calculateAdvancedAnalytics(
   const contributorPerformances = calculateContributorPerformances(commits, contributors, totalDays / 7, projectConfig);
   
   // Calculate project health
-  const projectHealth = calculateProjectHealth(commits, contributors, totalDays / 7, dateRange);
+  const projectHealth = calculateProjectHealth(commits, contributors, totalDays / 7);
   
   // Detect issues
-  const detectedIssues = detectProjectIssues(commits, contributors, contributorPerformances, dateRange, projectConfig);
+  const detectedIssues = detectProjectIssues(commits, contributors, contributorPerformances, dateRange);
   
   // Generate insights
   const insights = generateInsights(contributorPerformances, projectHealth, detectedIssues);
@@ -205,7 +205,7 @@ function determineActivityPattern(commits: CommitData[], totalWeeks: number): 'r
   if (commits.length === 0) return 'irregular';
   
   // Simple heuristic: if commits are spread across weeks, it's regular
-  const weeksWithCommits = new Set(commits.map(c => getWeekKey(new Date(c.date))).length);
+  const weeksWithCommits = new Set(commits.map(c => getWeekKey(new Date(c.date))));
   const regularityRatio = weeksWithCommits.size / Math.max(1, totalWeeks);
   
   if (regularityRatio > 0.7) return 'regular';
@@ -363,8 +363,7 @@ function findLowPeriod(commits: CommitData[]): { start: string; end: string; met
 function calculateProjectHealth(
   commits: CommitData[], 
   contributors: Record<string, ContributorData>, 
-  totalWeeks: number,
-  dateRange: { start: Date; end: Date }
+  totalWeeks: number
 ): ProjectHealth {
   const activeDevelopers = Object.keys(contributors).length;
   const totalCommits = commits.length;
@@ -441,8 +440,7 @@ function detectProjectIssues(
   commits: CommitData[], 
   contributors: Record<string, ContributorData>, 
   performances: ContributorPerformance[],
-  dateRange: { start: Date; end: Date },
-  projectConfig: { groupedAuthors: Array<{ primaryName: string; aliases: string[] }>; excludedUsers: string[] }
+  dateRange: { start: Date; end: Date }
 ): DetectedIssue[] {
   const issues: DetectedIssue[] = [];
   
@@ -542,8 +540,7 @@ async function loadProjectConfig(git: SimpleGit, repoPath: string): Promise<{ gr
   
   try {
     if (fs.existsSync(configPath)) {
-      const configContent = fs.readFileSync(configPath, 'utf-8');
-      // Parse configuration (simplified)
+      // Read and parse configuration (simplified)
       return {
         groupedAuthors: [],
         excludedUsers: []
@@ -587,7 +584,7 @@ async function parseGitLogForAnalytics(git: SimpleGit, repoPath: string, options
     const contributors: Record<string, ContributorData> = {};
     
     // Process log output (simplified parsing)
-    const lines = logResult.raw.split('\n');
+    const lines = logResult.all.map(commit => `${commit.hash}|${commit.author_name}|${commit.date}|${commit.message}|${commit.body || ''}`).join('\n').split('\n');
     let currentCommit: Partial<CommitData> = {};
     
     for (const line of lines) {

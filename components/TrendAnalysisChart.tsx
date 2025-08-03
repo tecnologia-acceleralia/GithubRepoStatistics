@@ -14,7 +14,7 @@ import {
   TimeScale,
   Filler,
 } from 'chart.js';
-import { Line, Bar, Scatter } from 'react-chartjs-2';
+import { Line, Bar } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
 import InfoIcon from './InfoIcon';
 import MoreInfoButton from './MoreInfoButton';
@@ -147,7 +147,6 @@ const getAnomaliesAnalysis = (anomalies: { date: string; value: number; type: 'h
 const getSlopeAnalysis = (slope: number): string => {
   const slopeValue = slope.toFixed(3);
   const slopeSign = slope > 0 ? '+' : '';
-  const slopeMagnitude = Math.abs(slope);
   
   let content = `📏 <strong>Slope Analysis:</strong><br><br>`;
   
@@ -242,9 +241,9 @@ const TrendAnalysisChart: React.FC<TrendAnalysisChartProps> = ({ commitActivity,
         },
         tooltip: {
           callbacks: {
-            afterLabel: (context: any) => {
-              if (context.datasetIndex === 2 && trendAnalysis.anomalies.length > 0) { // Anomalies dataset
-                const anomaly = trendAnalysis.anomalies.find(a => a.date === context.parsed.x);
+            afterLabel: (tooltipItem: any) => {
+              if (tooltipItem.datasetIndex === 2 && trendAnalysis.anomalies.length > 0) { // Anomalies dataset
+                const anomaly = trendAnalysis.anomalies.find(a => a.date === tooltipItem.parsed.x);
                 return anomaly ? `${anomaly.type === 'high' ? '🔥' : '❄️'} ${anomaly.type} activity anomaly` : '';
               }
               return '';
