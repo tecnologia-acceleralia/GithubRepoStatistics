@@ -419,8 +419,8 @@ export default function Home() {
                       </div>
                     ) : basicFilteredStats ? (
                       <>
-                        <p className="text-secondary">Total Commits Analyzed (matching filters): {basicFilteredStats.totalCommits}</p>
                         <p className="text-secondary">Total Commits Analyzed (configuration applied): {basicFilteredStats.totalCommitsWithConfig}</p>
+                        <p className="text-secondary">Total Commits Analyzed (matching filters): {basicFilteredStats.totalCommits}</p>
                       </>
                     ) : (
                       <div className="loading-placeholder">
@@ -524,8 +524,8 @@ export default function Home() {
                       </div>
                     ) : advancedFilteredStats ? (
                       <>
-                        <p className="text-secondary">Total Commits Analyzed (matching filters): {advancedFilteredStats.totalCommits}</p>
                         <p className="text-secondary">Total Commits Analyzed (configuration applied): {advancedFilteredStats.totalCommitsWithConfig}</p>
+                        <p className="text-secondary">Total Commits Analyzed (matching filters): {advancedFilteredStats.totalCommits}</p>
                       </>
                     ) : (
                       <div className="loading-placeholder">
