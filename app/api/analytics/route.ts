@@ -669,24 +669,114 @@ function generateInsights(
   const recommendations: string[] = [];
   const riskFactors: string[] = [];
   
-  // Generate insights based on data
+  console.log('generateInsights debug:', {
+    performancesCount: performances.length,
+    healthScore: health.overallScore,
+    issuesCount: issues.length,
+    activeDevelopers: health.teamCollaboration.activeDevelopers,
+    busFactor: health.teamCollaboration.busFactor,
+    velocityTrend: health.developmentVelocity.trend,
+    avgCommitSize: health.codeQuality.averageCommitSize
+  });
+  
+  // Generate insights based on project health
   if (health.overallScore < 50) {
     keyFindings.push('Project health score is below average');
     recommendations.push('Focus on improving development velocity and team collaboration');
+  } else if (health.overallScore >= 80) {
+    keyFindings.push('Project health score is excellent');
+    recommendations.push('Maintain current development practices and consider sharing best practices');
+  } else {
+    keyFindings.push('Project health score is good with room for improvement');
+    recommendations.push('Focus on specific areas to reach excellent health status');
   }
   
+  // Analyze team collaboration
+  if (health.teamCollaboration.activeDevelopers <= 1) {
+    keyFindings.push('Single developer project detected');
+    recommendations.push('Consider expanding the team or implementing knowledge sharing practices');
+  } else if (health.teamCollaboration.activeDevelopers >= 5) {
+    keyFindings.push('Strong team collaboration with multiple active developers');
+    recommendations.push('Leverage team diversity for better code quality and knowledge distribution');
+  }
+  
+  // Analyze development velocity
+  if (health.developmentVelocity.trend === 'increasing') {
+    keyFindings.push('Development velocity is improving');
+    recommendations.push('Maintain momentum and consider scaling successful practices');
+  } else if (health.developmentVelocity.trend === 'decreasing') {
+    keyFindings.push('Development velocity is declining');
+    recommendations.push('Investigate bottlenecks and implement process improvements');
+  } else {
+    keyFindings.push('Development velocity is stable');
+    recommendations.push('Consider optimization opportunities to increase productivity');
+  }
+  
+  // Analyze code quality
+  if (health.codeQuality.averageCommitSize > 100) {
+    keyFindings.push('Large commit sizes detected');
+    recommendations.push('Consider smaller, more frequent commits for better code review');
+  } else if (health.codeQuality.averageCommitSize < 20) {
+    keyFindings.push('Small, focused commits detected');
+    recommendations.push('Good practice! Continue with granular commit strategy');
+  }
+  
+  // Analyze contributor performance
+  const exceptionalContributors = performances.filter(p => p.performanceRating === 'exceptional').length;
+  const belowAverageContributors = performances.filter(p => p.performanceRating === 'below_average').length;
+  
+  if (exceptionalContributors > 0) {
+    keyFindings.push(`${exceptionalContributors} exceptional contributor(s) identified`);
+    recommendations.push('Leverage exceptional contributors for mentoring and best practices');
+  }
+  
+  if (belowAverageContributors > 0) {
+    keyFindings.push(`${belowAverageContributors} contributor(s) performing below average`);
+    recommendations.push('Provide additional support and training for struggling contributors');
+  }
+  
+  // Add insights about detected issues
   if (issues.length > 0) {
     keyFindings.push(`${issues.length} critical issues detected`);
     recommendations.push('Address detected issues to improve project health');
+  } else {
+    keyFindings.push('No critical issues detected in the project');
+    recommendations.push('Continue monitoring to maintain high project quality');
   }
   
   // Calculate bus factor risk based on number of contributors and their distribution
-  const contributorCount = Object.keys(performances).length;
+  const contributorCount = performances.length;
   const criticalBusFactorThreshold = Math.max(2, Math.ceil(contributorCount * 0.3)); // At least 2, or 30% of contributors
   
   if (health.teamCollaboration.busFactor < criticalBusFactorThreshold) {
     riskFactors.push('High bus factor risk - project depends on few contributors');
+  } else {
+    keyFindings.push('Good bus factor - project has healthy knowledge distribution');
   }
+  
+  // Add general productivity insights
+  const totalContributors = performances.length;
+  if (totalContributors > 0) {
+    const avgCommitsPerWeek = performances.reduce((sum, p) => sum + p.productivity.commitsPerWeek, 0) / totalContributors;
+    if (avgCommitsPerWeek > 5) {
+      keyFindings.push('High team activity with frequent commits');
+      recommendations.push('Ensure code quality doesn\'t suffer from rapid development');
+    } else if (avgCommitsPerWeek < 1) {
+      keyFindings.push('Low team activity detected');
+      recommendations.push('Consider ways to increase development momentum');
+    }
+  }
+  
+  // Ensure we always have at least some insights
+  if (keyFindings.length === 0) {
+    keyFindings.push('Project analysis completed successfully');
+  }
+  
+  if (recommendations.length === 0) {
+    recommendations.push('Continue monitoring project metrics for ongoing improvement');
+  }
+  
+  console.log('Generated insights:', { keyFindings, recommendations, riskFactors });
   
   return { keyFindings, recommendations, riskFactors };
 }

@@ -992,6 +992,13 @@ const IssuesTab: React.FC<{ analytics: AnalyticsData }> = ({ analytics }) => {
 const InsightsTab: React.FC<{ analytics: AnalyticsData }> = ({ analytics }) => {
   const { insights } = analytics;
 
+  console.log('InsightsTab debug:', {
+    insights,
+    keyFindingsLength: insights.keyFindings.length,
+    recommendationsLength: insights.recommendations.length,
+    riskFactorsLength: insights.riskFactors.length
+  });
+
   return (
     <div className="insights-grid">
       {/* Key Findings */}
@@ -1001,12 +1008,19 @@ const InsightsTab: React.FC<{ analytics: AnalyticsData }> = ({ analytics }) => {
           <h3 className="insights-card-title">Key Findings</h3>
         </div>
         <ul className="insights-list">
-          {insights.keyFindings.map((finding, index) => (
-            <li key={index} className="insights-list-item">
+          {insights.keyFindings.length > 0 ? (
+            insights.keyFindings.map((finding, index) => (
+              <li key={index} className="insights-list-item">
+                <span className="insights-list-bullet">•</span>
+                <span className="insights-list-text">{finding}</span>
+              </li>
+            ))
+          ) : (
+            <li className="insights-list-item">
               <span className="insights-list-bullet">•</span>
-              <span className="insights-list-text">{finding}</span>
+              <span className="insights-list-text">Analysis in progress...</span>
             </li>
-          ))}
+          )}
         </ul>
       </div>
 
@@ -1017,12 +1031,19 @@ const InsightsTab: React.FC<{ analytics: AnalyticsData }> = ({ analytics }) => {
           <h3 className="insights-card-title">Recommendations</h3>
         </div>
         <ul className="insights-list">
-          {insights.recommendations.map((recommendation, index) => (
-            <li key={index} className="insights-list-item">
+          {insights.recommendations.length > 0 ? (
+            insights.recommendations.map((recommendation, index) => (
+              <li key={index} className="insights-list-item">
+                <span className="insights-list-bullet success">✓</span>
+                <span className="insights-list-text">{recommendation}</span>
+              </li>
+            ))
+          ) : (
+            <li className="insights-list-item">
               <span className="insights-list-bullet success">✓</span>
-              <span className="insights-list-text">{recommendation}</span>
+              <span className="insights-list-text">Continue monitoring project metrics...</span>
             </li>
-          ))}
+          )}
         </ul>
       </div>
 
@@ -1033,12 +1054,19 @@ const InsightsTab: React.FC<{ analytics: AnalyticsData }> = ({ analytics }) => {
           <h3 className="insights-card-title">Risk Factors</h3>
         </div>
         <ul className="insights-list">
-          {insights.riskFactors.map((risk, index) => (
-            <li key={index} className="insights-list-item">
-              <span className="insights-list-bullet danger">!</span>
-              <span className="insights-list-text">{risk}</span>
+          {insights.riskFactors.length > 0 ? (
+            insights.riskFactors.map((risk, index) => (
+              <li key={index} className="insights-list-item">
+                <span className="insights-list-bullet danger">!</span>
+                <span className="insights-list-text">{risk}</span>
+              </li>
+            ))
+          ) : (
+            <li className="insights-list-item">
+              <span className="insights-list-bullet">•</span>
+              <span className="insights-list-text">No significant risks detected</span>
             </li>
-          ))}
+          )}
         </ul>
       </div>
     </div>
