@@ -8,7 +8,11 @@
     "start": "next start",
     "lint": "next lint",
     "lint:watch": "next lint --watch",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "analyze": "next build && npx @next/bundle-analyzer",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf .next out dist",
+    "analyze-components": "node scripts/analyze-components.js"
   },
   "dependencies": {
     "chart.js": "^4.4.9",
