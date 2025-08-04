@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import simpleGit, { SimpleGit } from 'simple-git';
-import path from 'path';
-import fs from 'fs';
 
 // Define proper types for commit data
 interface CommitData {
@@ -111,16 +109,24 @@ interface AnalyticsResponse {
 function calculateAdvancedAnalytics(
   commits: CommitData[], 
   contributors: Record<string, ContributorData>,
-  dateRange: { start: Date; end: Date },
-  projectConfig: { groupedAuthors: Array<{ primaryName: string; aliases: string[] }>; excludedUsers: string[] }
+  dateRange: { start: Date; end: Date }
 ): AnalyticsResponse {
   const totalDays = Math.ceil((dateRange.end.getTime() - dateRange.start.getTime()) / (1000 * 60 * 60 * 24));
+  const totalWeeks = totalDays / 7;
+  
+  console.log('calculateAdvancedAnalytics debug:', {
+    commitsCount: commits.length,
+    contributorsCount: Object.keys(contributors).length,
+    totalDays,
+    totalWeeks,
+    dateRange
+  });
   
   // Calculate contributor performances
-  const contributorPerformances = calculateContributorPerformances(commits, contributors, totalDays / 7, projectConfig);
+  const contributorPerformances = calculateContributorPerformances(commits, contributors, totalWeeks);
   
   // Calculate project health
-  const projectHealth = calculateProjectHealth(commits, contributors, totalDays / 7);
+  const projectHealth = calculateProjectHealth(commits, contributors, totalWeeks);
   
   // Detect issues
   const detectedIssues = detectProjectIssues(commits, contributors, contributorPerformances, dateRange);
@@ -129,7 +135,7 @@ function calculateAdvancedAnalytics(
   const insights = generateInsights(contributorPerformances, projectHealth, detectedIssues);
   
   // Calculate benchmarks
-  const benchmarks = calculateBenchmarks(contributors, totalDays / 7);
+  const benchmarks = calculateBenchmarks(contributors, totalWeeks);
   
   return {
     contributors: contributorPerformances,
@@ -143,21 +149,18 @@ function calculateAdvancedAnalytics(
 function calculateContributorPerformances(
   commits: CommitData[], 
   contributors: Record<string, ContributorData>, 
-  totalWeeks: number,
-  projectConfig: { groupedAuthors: Array<{ primaryName: string; aliases: string[] }>; excludedUsers: string[] }
+  totalWeeks: number
 ): ContributorPerformance[] {
   const performances: ContributorPerformance[] = [];
   
-  for (const [name, stats] of Object.entries(contributors)) {
-    if (projectConfig.excludedUsers.includes(name)) continue;
+  // Calculate performances for each contributor (already filtered and normalized)
+  for (const [contributorName, stats] of Object.entries(contributors)) {
+    const userCommits = commits.filter(c => c.author === contributorName);
     
-    const normalizedName = normalizeAuthorName(name, projectConfig);
-    const userCommits = commits.filter(c => normalizeAuthorName(c.author, projectConfig) === normalizedName);
-    
-    const commitsPerWeek = totalWeeks > 0 ? stats.commits / totalWeeks : 0;
-    const linesPerCommit = stats.commits > 0 ? (stats.linesAdded + stats.linesDeleted) / stats.commits : 0;
-    const filesPerCommit = stats.commits > 0 ? stats.filesChanged / stats.commits : 0;
-    const consistencyScore = calculateConsistencyScore(userCommits, totalWeeks);
+    const commitsPerWeek = totalWeeks > 0 ? Math.round((stats.commits / totalWeeks) * 100) / 100 : 0;
+    const linesPerCommit = stats.commits > 0 ? Math.round(((stats.linesAdded + stats.linesDeleted) / stats.commits) * 100) / 100 : 0;
+    const filesPerCommit = stats.commits > 0 ? Math.round((stats.filesChanged / stats.commits) * 100) / 100 : 0;
+    const consistencyScore = Math.round(calculateConsistencyScore(userCommits, totalWeeks) * 100) / 100;
     
     // Determine activity pattern
     const activityPattern = determineActivityPattern(userCommits, totalWeeks);
@@ -167,16 +170,20 @@ function calculateContributorPerformances(
     const peakPeriod = findPeakPeriod(userCommits);
     const lowPeriod = findLowPeriod(userCommits);
     
-    // Calculate relative rankings (simplified)
-    const commitRank = 1; // Placeholder
-    const productivityRank = 1; // Placeholder
-    const consistencyRank = 1; // Placeholder
-    
     // Determine performance rating
     const performanceRating = determinePerformanceRating(commitsPerWeek, linesPerCommit, consistencyScore);
     
+    // Debug logging for performance calculation
+    console.log(`Performance calculation for ${contributorName}:`, {
+      commitsPerWeek,
+      linesPerCommit,
+      consistencyScore,
+      performanceRating,
+      totalWeeks
+    });
+    
     performances.push({
-      name: normalizedName,
+      name: contributorName,
       performanceRating,
       productivity: {
         commitsPerWeek,
@@ -191,10 +198,35 @@ function calculateContributorPerformances(
         lowPerformancePeriod: lowPeriod
       },
       relativeToPeers: {
+        commitRank: 1, // Will be calculated after all performances are computed
+        productivityRank: 1, // Will be calculated after all performances are computed
+        consistencyRank: 1 // Will be calculated after all performances are computed
+      }
+    });
+  }
+  
+  // Calculate rankings after all performances are computed
+  if (performances.length > 1) {
+    // Sort by commits per week for commit rank
+    const sortedByCommits = [...performances].sort((a, b) => b.productivity.commitsPerWeek - a.productivity.commitsPerWeek);
+    
+    // Sort by lines per commit for productivity rank
+    const sortedByProductivity = [...performances].sort((a, b) => b.productivity.linesPerCommit - a.productivity.linesPerCommit);
+    
+    // Sort by consistency score for consistency rank
+    const sortedByConsistency = [...performances].sort((a, b) => b.productivity.consistencyScore - a.productivity.consistencyScore);
+    
+    // Update rankings
+    performances.forEach(performance => {
+      const commitRank = sortedByCommits.findIndex(p => p.name === performance.name) + 1;
+      const productivityRank = sortedByProductivity.findIndex(p => p.name === performance.name) + 1;
+      const consistencyRank = sortedByConsistency.findIndex(p => p.name === performance.name) + 1;
+      
+      performance.relativeToPeers = {
         commitRank,
         productivityRank,
         consistencyRank
-      }
+      };
     });
   }
   
@@ -214,11 +246,18 @@ function determineActivityPattern(commits: CommitData[], totalWeeks: number): 'r
 }
 
 function determinePerformanceRating(commitsPerWeek: number, linesPerCommit: number, consistencyScore: number): 'below_average' | 'average' | 'above_average' | 'exceptional' {
-  const score = (commitsPerWeek * 0.4) + (linesPerCommit * 0.3) + (consistencyScore * 0.3);
+  // Normalize values to a 0-10 scale for better comparison
+  const normalizedCommitsPerWeek = Math.min(10, commitsPerWeek * 2); // Scale: 0-5 commits/week = 0-10
+  const normalizedLinesPerCommit = Math.min(10, linesPerCommit / 50); // Scale: 0-500 lines/commit = 0-10
+  const normalizedConsistencyScore = Math.min(10, Math.max(0, consistencyScore)); // Already 0-10 scale
   
-  if (score > 8) return 'exceptional';
-  if (score > 6) return 'above_average';
-  if (score > 4) return 'average';
+  // Calculate weighted score
+  const score = (normalizedCommitsPerWeek * 0.4) + (normalizedLinesPerCommit * 0.3) + (normalizedConsistencyScore * 0.3);
+  
+  // More reasonable thresholds based on normalized 0-10 scale
+  if (score >= 8) return 'exceptional';
+  if (score >= 6) return 'above_average';
+  if (score >= 4) return 'average';
   return 'below_average';
 }
 
@@ -234,12 +273,25 @@ function calculateConsistencyScore(commits: CommitData[], totalWeeks: number): n
   }
   
   const commitCounts = Array.from(commitsByWeek.values());
+  
+  // Handle edge cases
+  if (commitCounts.length === 0) return 0;
+  if (commitCounts.length === 1) return 10; // Perfect consistency if only one week
+  
   const mean = commitCounts.reduce((sum, count) => sum + count, 0) / commitCounts.length;
   const variance = commitCounts.reduce((sum, count) => sum + Math.pow(count - mean, 2), 0) / commitCounts.length;
   const stdDev = Math.sqrt(variance);
   
-  // Higher consistency = lower standard deviation
-  return Math.max(0, 10 - stdDev);
+  // Calculate consistency score: higher consistency = lower standard deviation
+  // Use a more sophisticated formula that considers the mean and standard deviation
+  const coefficientOfVariation = mean > 0 ? stdDev / mean : 0;
+  
+  // Convert to a 0-10 scale where:
+  // - 0 = very inconsistent (high CV)
+  // - 10 = very consistent (low CV)
+  const consistencyScore = Math.max(0, 10 - (coefficientOfVariation * 10));
+  
+  return Math.round(consistencyScore * 100) / 100; // Round to 2 decimal places
 }
 
 function getWeekKey(date: Date): string {
@@ -365,6 +417,7 @@ function calculateProjectHealth(
   contributors: Record<string, ContributorData>, 
   totalWeeks: number
 ): ProjectHealth {
+  // Count unique contributors (already filtered and normalized)
   const activeDevelopers = Object.keys(contributors).length;
   const totalCommits = commits.length;
   const totalLines = commits.reduce((sum, commit) => {
@@ -375,8 +428,8 @@ function calculateProjectHealth(
     return sum;
   }, 0);
   
-  const averageCommitSize = totalCommits > 0 ? totalLines / totalCommits : 0;
-  const refactoringRatio = commits.reduce((sum, commit) => {
+  const averageCommitSize = totalCommits > 0 ? Math.round((totalLines / totalCommits) * 100) / 100 : 0;
+  const refactoringRatio = Math.round(commits.reduce((sum, commit) => {
     const diff = commit.diff;
     if (diff) {
       const deletions = diff.files.reduce((fileSum, file) => fileSum + file.deletions, 0);
@@ -384,7 +437,7 @@ function calculateProjectHealth(
       return sum + (deletions / Math.max(1, insertions));
     }
     return sum;
-  }, 0) / Math.max(1, totalCommits);
+  }, 0) / Math.max(1, totalCommits) * 100) / 100;
   
   const largeCommits = commits.filter(commit => {
     const diff = commit.diff;
@@ -395,28 +448,110 @@ function calculateProjectHealth(
     return false;
   }).length;
   
-  const largeCommitFrequency = totalCommits > 0 ? largeCommits / totalCommits : 0;
+  const largeCommitFrequency = totalCommits > 0 ? Math.round((largeCommits / totalCommits) * 100) / 100 : 0;
   
-  // Calculate development velocity
-  const currentVelocity = totalWeeks > 0 ? totalCommits / totalWeeks : 0;
-  const trend = currentVelocity > 10 ? 'increasing' : currentVelocity < 5 ? 'decreasing' : 'stable';
-  const changePercent = 0; // Placeholder
+  // Calculate development velocity with proper trend analysis
+  const currentVelocity = totalWeeks > 0 ? Math.round((totalCommits / totalWeeks) * 100) / 100 : 0;
   
-  // Calculate team collaboration score
-  const teamCollaborationScore = Math.min(100, activeDevelopers * 20);
-  const newContributors = 0; // Placeholder
-  const busFactor = activeDevelopers > 1 ? 100 - (100 / activeDevelopers) : 0;
+  console.log('calculateProjectHealth debug:', {
+    activeDevelopers,
+    totalCommits,
+    totalLines,
+    averageCommitSize,
+    refactoringRatio,
+    largeCommits,
+    largeCommitFrequency,
+    currentVelocity,
+    totalWeeks
+  });
   
-  // Calculate overall score
-  const overallScore = Math.min(100, 
-    (currentVelocity * 10) + 
-    (teamCollaborationScore * 0.3) + 
-    ((1 - largeCommitFrequency) * 20) +
-    (Math.max(0, 10 - refactoringRatio) * 5)
+  // Calculate trend by comparing first half vs second half of commits
+  let trend: 'increasing' | 'decreasing' | 'stable' = 'stable';
+  let changePercent = 0;
+  
+  if (commits.length >= 4) {
+    const sortedCommits = commits.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const midPoint = Math.floor(sortedCommits.length / 2);
+    const firstHalf = sortedCommits.slice(0, midPoint);
+    const secondHalf = sortedCommits.slice(midPoint);
+    
+    const firstHalfWeeks = Math.max(1, (new Date(firstHalf[firstHalf.length - 1].date).getTime() - new Date(firstHalf[0].date).getTime()) / (1000 * 60 * 60 * 24 * 7));
+    const secondHalfWeeks = Math.max(1, (new Date(secondHalf[secondHalf.length - 1].date).getTime() - new Date(secondHalf[0].date).getTime()) / (1000 * 60 * 60 * 24 * 7));
+    
+    const firstHalfVelocity = firstHalfWeeks > 0 ? Math.round((firstHalf.length / firstHalfWeeks) * 100) / 100 : 0;
+    const secondHalfVelocity = secondHalfWeeks > 0 ? Math.round((secondHalf.length / secondHalfWeeks) * 100) / 100 : 0;
+    
+    if (firstHalfVelocity > 0) {
+      changePercent = Math.round(((secondHalfVelocity - firstHalfVelocity) / firstHalfVelocity) * 100) / 100;
+      
+      if (changePercent > 20) {
+        trend = 'increasing';
+      } else if (changePercent < -20) {
+        trend = 'decreasing';
+      } else {
+        trend = 'stable';
+      }
+    }
+  }
+  
+  // Calculate bus factor (number of contributors with >20% of total commits)
+  const contributorPercentages = Object.entries(contributors).map(([name, stats]) => ({
+    name,
+    percentage: Math.round((stats.commits / totalCommits) * 100) / 100
+  }));
+  
+  const criticalContributors = contributorPercentages.filter(c => c.percentage > 20);
+  const busFactor = criticalContributors.length;
+  
+  // Calculate team collaboration score (more sophisticated)
+  const teamCollaborationScore = Math.min(100, 
+    Math.max(0, (activeDevelopers * 15) + (busFactor * 10) + (Math.max(0, 10 - largeCommitFrequency * 100) * 5))
   );
   
+  // Calculate new contributors (contributors who started in the last 30 days)
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  
+  const newContributors = Object.entries(contributors).filter(([name]) => {
+    // Find the first commit by this contributor
+    const contributorCommits = commits.filter(c => c.author === name);
+    if (contributorCommits.length === 0) return false;
+    
+    // Sort commits by date and check if first commit was within last 30 days
+    const sortedCommits = contributorCommits.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const firstCommitDate = new Date(sortedCommits[0].date);
+    
+    return firstCommitDate >= thirtyDaysAgo;
+  }).length;
+  
+  // Calculate overall score with better weighting
+  let overallScore = 100; // Start with perfect score
+  
+  // Deduct for low activity
+  if (currentVelocity < 1) overallScore -= 20;
+  else if (currentVelocity < 2) overallScore -= 10;
+  
+  // Deduct for single contributor risk
+  if (activeDevelopers <= 1) overallScore -= 30;
+  else if (activeDevelopers <= 2) overallScore -= 15;
+  
+  // Deduct for critical bus factor
+  if (busFactor <= 1) overallScore -= 25;
+  else if (busFactor <= 2) overallScore -= 10;
+  
+  // Deduct for declining velocity
+  if (trend === 'decreasing' && changePercent < -50) overallScore -= 15;
+  else if (trend === 'decreasing') overallScore -= 5;
+  
+  // Deduct for large commits
+  if (averageCommitSize > 500) overallScore -= 10;
+  else if (averageCommitSize > 200) overallScore -= 5;
+  
+  // Bonus for increasing velocity
+  if (trend === 'increasing' && changePercent > 20) overallScore += 10;
+  
   return {
-    overallScore,
+    overallScore: Math.max(0, Math.min(100, overallScore)),
     developmentVelocity: {
       current: currentVelocity,
       trend,
@@ -447,9 +582,39 @@ function detectProjectIssues(
   // Check for low activity
   const totalCommits = commits.length;
   const totalWeeks = Math.max(1, (dateRange.end.getTime() - dateRange.start.getTime()) / (1000 * 60 * 60 * 24 * 7));
-  const commitsPerWeek = totalCommits / totalWeeks;
+  const commitsPerWeek = Math.round((totalCommits / totalWeeks) * 100) / 100;
   
   if (commitsPerWeek < 2) {
+    // Calculate actual metrics for the affected period
+    const affectedCommits = commits.filter(commit => {
+      const commitDate = new Date(commit.date);
+      return commitDate >= dateRange.start && commitDate <= dateRange.end;
+    });
+    
+    const totalLinesAdded = affectedCommits.reduce((sum, commit) => {
+      const diff = commit.diff;
+      if (diff) {
+        return sum + diff.files.reduce((fileSum, file) => fileSum + file.insertions, 0);
+      }
+      return sum;
+    }, 0);
+    
+    const totalLinesDeleted = affectedCommits.reduce((sum, commit) => {
+      const diff = commit.diff;
+      if (diff) {
+        return sum + diff.files.reduce((fileSum, file) => fileSum + file.deletions, 0);
+      }
+      return sum;
+    }, 0);
+    
+    const totalFilesChanged = affectedCommits.reduce((sum, commit) => {
+      const diff = commit.diff;
+      if (diff) {
+        return sum + diff.files.length;
+      }
+      return sum;
+    }, 0);
+    
     issues.push({
       type: 'low_activity',
       severity: commitsPerWeek < 1 ? 'critical' : 'high',
@@ -461,9 +626,9 @@ function detectProjectIssues(
       suggestions: ['Schedule regular development sessions', 'Set up automated reminders', 'Review project priorities'],
       metrics: {
         commits: totalCommits,
-        linesAdded: 0,
-        linesDeleted: 0,
-        filesChanged: 0,
+        linesAdded: totalLinesAdded,
+        linesDeleted: totalLinesDeleted,
+        filesChanged: totalFilesChanged,
         date: dateRange.start.toISOString()
       }
     });
@@ -515,39 +680,52 @@ function generateInsights(
     recommendations.push('Address detected issues to improve project health');
   }
   
-  if (health.teamCollaboration.busFactor < 50) {
+  // Calculate bus factor risk based on number of contributors and their distribution
+  const contributorCount = Object.keys(performances).length;
+  const criticalBusFactorThreshold = Math.max(2, Math.ceil(contributorCount * 0.3)); // At least 2, or 30% of contributors
+  
+  if (health.teamCollaboration.busFactor < criticalBusFactorThreshold) {
     riskFactors.push('High bus factor risk - project depends on few contributors');
   }
   
   return { keyFindings, recommendations, riskFactors };
 }
 
-function calculateBenchmarks(contributors: Record<string, ContributorData>, totalWeeks: number) {
+function calculateBenchmarks(
+  contributors: Record<string, ContributorData>, 
+  totalWeeks: number
+) {
   const totalCommits = Object.values(contributors).reduce((sum, stats) => sum + stats.commits, 0);
   const totalLines = Object.values(contributors).reduce((sum, stats) => sum + stats.linesAdded + stats.linesDeleted, 0);
   const totalFiles = Object.values(contributors).reduce((sum, stats) => sum + stats.filesChanged, 0);
   
   return {
-    averageCommitsPerWeek: totalWeeks > 0 ? totalCommits / totalWeeks : 0,
-    averageLinesPerCommit: totalCommits > 0 ? totalLines / totalCommits : 0,
-    averageFilesPerCommit: totalCommits > 0 ? totalFiles / totalCommits : 0,
-    teamProductivityScore: Math.min(100, (totalCommits / Math.max(1, totalWeeks)) * 10)
+    averageCommitsPerWeek: totalWeeks > 0 ? Math.round((totalCommits / totalWeeks) * 100) / 100 : 0,
+    averageLinesPerCommit: totalCommits > 0 ? Math.round((totalLines / totalCommits) * 100) / 100 : 0,
+    averageFilesPerCommit: totalCommits > 0 ? Math.round((totalFiles / totalCommits) * 100) / 100 : 0,
+    teamProductivityScore: Math.min(100, Math.round((totalCommits / Math.max(1, totalWeeks)) * 10) / 10)
   };
 }
 
 async function loadProjectConfig(git: SimpleGit, repoPath: string): Promise<{ groupedAuthors: Array<{ primaryName: string; aliases: string[] }>; excludedUsers: string[] }> {
-  const configPath = path.join(repoPath, 'PROJECT_CONFIGURATION.md');
-  
   try {
-    if (fs.existsSync(configPath)) {
-      // Read and parse configuration (simplified)
-      return {
-        groupedAuthors: [],
-        excludedUsers: []
-      };
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/project-config`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        action: 'load',
+        repoPath 
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.config || { groupedAuthors: [], excludedUsers: [] };
     }
-  } catch {
-    // Ignore errors and return default config
+  } catch (error) {
+    console.warn('Failed to load project configuration:', error);
   }
   
   return {
@@ -557,6 +735,11 @@ async function loadProjectConfig(git: SimpleGit, repoPath: string): Promise<{ gr
 }
 
 function normalizeAuthorName(authorName: string, config: { groupedAuthors: Array<{ primaryName: string; aliases: string[] }>; excludedUsers: string[] }): string {
+  // Check if author is in excluded users
+  if (config.excludedUsers.includes(authorName)) {
+    return ''; // Return empty string to exclude
+  }
+  
   // Check if author is in grouped authors
   for (const group of config.groupedAuthors) {
     if (group.aliases.includes(authorName)) {
@@ -567,54 +750,143 @@ function normalizeAuthorName(authorName: string, config: { groupedAuthors: Array
   return authorName;
 }
 
-async function parseGitLogForAnalytics(git: SimpleGit, repoPath: string, options?: { from?: string; to?: string }): Promise<AnalyticsResponse> {
+async function parseGitLogForAnalytics(git: SimpleGit, repoPath: string, options?: { from?: string; to?: string; author?: string }): Promise<AnalyticsResponse> {
   try {
     // Load project configuration
     const projectConfig = await loadProjectConfig(git, repoPath);
+    console.log('Project config loaded:', projectConfig);
     
-    // Get git log with detailed information
-    const logOptions = ['--pretty=format:%H|%an|%ad|%s|%b', '--date=iso', '--numstat'];
-    if (options?.from) logOptions.push(`--since=${options.from}`);
-    if (options?.to) logOptions.push(`--until=${options.to}`);
-    
+    // Use the same Git log options as the working stats API
+    const logOptions: Record<string, string | null> = {
+      '--all': null,
+      '--no-merges': null,
+      '--numstat': null,
+      '--date': 'iso-strict',
+    };
+
+    if (options?.from) logOptions['--since'] = options.from;
+    if (options?.to) logOptions['--until'] = options.to;
+    if (options?.author) logOptions['--author'] = options.author;
+
     const logResult = await git.log(logOptions);
+    console.log('Total commits found:', logResult.all.length);
     
-    // Parse commits and calculate statistics
+    // Debug: Log the first commit to see what we're getting
+    if (logResult.all.length > 0) {
+      const firstCommit = logResult.all[0];
+      console.log('First commit debug:', {
+        hash: firstCommit.hash,
+        author_name: firstCommit.author_name,
+        author_email: firstCommit.author_email,
+        date: firstCommit.date,
+        message: firstCommit.message,
+        diff: firstCommit.diff
+      });
+    }
+    
+    // Parse commits and calculate statistics using the same logic as stats API
     const commits: CommitData[] = [];
     const contributors: Record<string, ContributorData> = {};
     
-    // Process log output (simplified parsing)
-    const lines = logResult.all.map(commit => `${commit.hash}|${commit.author_name}|${commit.date}|${commit.message}|${commit.body || ''}`).join('\n').split('\n');
-    let currentCommit: Partial<CommitData> = {};
-    
-    for (const line of lines) {
-      if (line.includes('|')) {
-        // This is a commit line
-        const [hash, author, date, message, body] = line.split('|');
-        currentCommit = {
-          hash: hash || '',
-          author: author || '',
-          date: date || '',
-          message: message || '',
-          body: body || undefined
+    // Process each commit with the same logic as the working stats API
+    for (const commit of logResult.all) {
+      const author = commit.author_name || '';
+      console.log(`Processing commit ${commit.hash}: author="${author}"`);
+      
+      // Skip commits with empty author names
+      if (!author || author.trim() === '') {
+        console.log(`Skipping commit with empty author: ${commit.hash}`);
+        continue;
+      }
+      
+      // Apply project configuration to normalize author name
+      const normalizedAuthor = normalizeAuthorName(author, projectConfig);
+      console.log(`Author "${author}" normalized to "${normalizedAuthor}"`);
+      
+      // Skip commits from excluded users
+      if (normalizedAuthor === '') {
+        console.log(`Skipping commit from excluded user: ${author}`);
+        continue;
+      }
+      
+      // Initialize contributor stats if not exists
+      if (normalizedAuthor && !contributors[normalizedAuthor]) {
+        contributors[normalizedAuthor] = {
+          commits: 0,
+          linesAdded: 0,
+          linesDeleted: 0,
+          filesChanged: 0
         };
-        commits.push(currentCommit as CommitData);
-        
-        // Initialize contributor stats
-        if (author && !contributors[author]) {
-          contributors[author] = {
-            commits: 0,
-            linesAdded: 0,
-            linesDeleted: 0,
-            filesChanged: 0
-          };
-        }
-        
-        if (author) {
-          contributors[author].commits++;
+      }
+      
+      // Process diff stats using the same logic as the working stats API
+      let linesAdded = 0;
+      let linesDeleted = 0;
+      let filesChanged = 0;
+      
+      // Use the same diff processing logic as the working stats API
+      if (commit.diff && commit.diff.files) {
+        commit.diff.files.forEach(fileChange => {
+          // Check if it's a text file with insertions/deletions (not binary)
+          if ('insertions' in fileChange && 'deletions' in fileChange) {
+            const insertions = fileChange.insertions as number;
+            const deletions = fileChange.deletions as number;
+            if (typeof insertions === 'number' && typeof deletions === 'number') {
+              linesAdded += insertions;
+              linesDeleted += deletions;
+              filesChanged++;
+            }
+          }
+        });
+      } else {
+        // Fallback parsing from commit.body (same as stats API)
+        if (commit.body) {
+          const lines = commit.body.trim().split('\n');
+          lines.forEach(line => {
+            const parts = line.split('\t');
+            if (parts.length === 3) {
+              const added = parseInt(parts[0], 10);
+              const deleted = parseInt(parts[1], 10);
+              if (!isNaN(added) && !isNaN(deleted)) {
+                linesAdded += added;
+                linesDeleted += deleted;
+                filesChanged++;
+              }
+            }
+          });
         }
       }
+      
+      // Create commit data
+      const commitData: CommitData = {
+        hash: commit.hash,
+        author: normalizedAuthor,
+        date: commit.date,
+        message: commit.message || '',
+        body: commit.body || undefined,
+        diff: {
+          files: [{
+            file: 'aggregated',
+            changes: linesAdded + linesDeleted,
+            insertions: linesAdded,
+            deletions: linesDeleted
+          }]
+        }
+      };
+      
+      commits.push(commitData);
+      
+      // Update contributor statistics
+      if (normalizedAuthor) {
+        contributors[normalizedAuthor].commits++;
+        contributors[normalizedAuthor].linesAdded += linesAdded;
+        contributors[normalizedAuthor].linesDeleted += linesDeleted;
+        contributors[normalizedAuthor].filesChanged += filesChanged;
+      }
     }
+    
+    console.log('Processed commits:', commits.length);
+    console.log('Contributors found:', Object.keys(contributors));
     
     // Calculate date range
     const sortedCommits = commits.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -624,7 +896,7 @@ async function parseGitLogForAnalytics(git: SimpleGit, repoPath: string, options
     };
     
     // Calculate advanced analytics
-    return calculateAdvancedAnalytics(commits, contributors, dateRange, projectConfig);
+    return calculateAdvancedAnalytics(commits, contributors, dateRange);
     
   } catch (error) {
     console.error('Error parsing git log for analytics:', error);
@@ -634,7 +906,7 @@ async function parseGitLogForAnalytics(git: SimpleGit, repoPath: string, options
 
 export async function POST(req: NextRequest) {
   try {
-    const { repoPath, from, to } = await req.json();
+    const { repoPath, filters } = await req.json();
     
     if (!repoPath) {
       return NextResponse.json({ error: 'Repository path is required' }, { status: 400 });
@@ -649,8 +921,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid repository path' }, { status: 400 });
     }
     
+    // Extract filter options
+    const options: { from?: string; to?: string; author?: string } = {};
+    if (filters?.startDate) options.from = filters.startDate;
+    if (filters?.endDate) options.to = filters.endDate;
+    if (filters?.contributor) options.author = filters.contributor;
+    
     // Parse git log and calculate analytics
-    const analytics = await parseGitLogForAnalytics(git, repoPath, { from, to });
+    const analytics = await parseGitLogForAnalytics(git, repoPath, options);
     
     return NextResponse.json(analytics);
     

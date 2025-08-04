@@ -368,11 +368,13 @@ const ProjectConfiguration: React.FC<ProjectConfigurationProps> = ({
                             disabled={config.groupedAuthors[selectedGroupedAuthor].primaryName !== ''}
                           >
                             <option value="">Select primary author...</option>
-                            {contributors.map((contributor) => (
-                              <option key={contributor} value={contributor}>
-                                {contributor}
-                              </option>
-                            ))}
+                            {contributors
+                              .sort((a, b) => a.localeCompare(b))
+                              .map((contributor) => (
+                                <option key={contributor} value={contributor}>
+                                  {contributor}
+                                </option>
+                              ))}
                           </select>
                         </div>
 
@@ -406,11 +408,13 @@ const ProjectConfiguration: React.FC<ProjectConfigurationProps> = ({
                                             autoFocus
                                           >
                                             <option value="">Select user as alias...</option>
-                                            {contributors.map((contributor) => (
-                                              <option key={contributor} value={contributor}>
-                                                {contributor}
-                                              </option>
-                                            ))}
+                                            {contributors
+                                              .sort((a, b) => a.localeCompare(b))
+                                              .map((contributor) => (
+                                                <option key={contributor} value={contributor}>
+                                                  {contributor}
+                                                </option>
+                                              ))}
                                           </select>
                                         ) : (
                                           <span 
@@ -502,11 +506,13 @@ const ProjectConfiguration: React.FC<ProjectConfigurationProps> = ({
                                   autoFocus
                                 >
                                   <option value="">Select user to exclude...</option>
-                                  {contributors.map((contributor) => (
-                                    <option key={contributor} value={contributor}>
-                                      {contributor}
-                                    </option>
-                                  ))}
+                                  {contributors
+                                    .sort((a, b) => a.localeCompare(b))
+                                    .map((contributor) => (
+                                      <option key={contributor} value={contributor}>
+                                        {contributor}
+                                      </option>
+                                    ))}
                                 </select>
                               ) : (
                                 <span 
