@@ -547,11 +547,24 @@
 }
 
 .issues-no-issues {
-  background-color: var(--color-success-light);
-  border: 1px solid var(--color-success);
+  background-color: var(--color-background-card);
+  box-shadow: var(--shadow-md);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-lg);
   text-align: center;
+  border: 1px solid var(--color-border);
+  position: relative;
+}
+
+.issues-no-issues::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+  background-color: var(--color-success);
 }
 
 .issues-no-issues-icon {
@@ -562,12 +575,12 @@
 .issues-no-issues-title {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-success-dark);
+  color: var(--color-text-primary);
   margin-bottom: var(--spacing-sm);
 }
 
 .issues-no-issues-message {
-  color: var(--color-success-dark);
+  color: var(--color-text-secondary);
 }
 
 .issues-item {

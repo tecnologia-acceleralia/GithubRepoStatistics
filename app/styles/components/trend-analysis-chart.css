@@ -294,21 +294,28 @@
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-sm);
-  background-color: var(--color-background-secondary);
+  background-color: var(--color-background-card);
   border-radius: var(--border-radius-md);
-  border-left: 4px solid;
+  border: 1px solid var(--color-border);
+  position: relative;
 }
 
-.trend-analysis-anomaly-item.high {
-  border-color: var(--color-danger);
-  background-color: var(--color-danger-light);
-  color: var(--color-danger-dark);
+.trend-analysis-anomaly-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
 }
 
-.trend-analysis-anomaly-item.low {
-  border-color: var(--color-success);
-  background-color: var(--color-success-light);
-  color: var(--color-success-dark);
+.trend-analysis-anomaly-item.high::before {
+  background-color: var(--color-danger);
+}
+
+.trend-analysis-anomaly-item.low::before {
+  background-color: var(--color-success);
 }
 
 .trend-analysis-anomaly-icon {

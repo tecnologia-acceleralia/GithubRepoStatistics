@@ -292,34 +292,38 @@
 
 /* Alert Card */
 .team-health-alert-card {
-  border-left: 4px solid;
+  background-color: var(--color-background-card);
+  box-shadow: var(--shadow-md);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-md);
+  border: 1px solid var(--color-border);
   position: relative;
 }
 
-.team-health-alert-card.critical {
-  border-color: var(--color-danger);
-  background-color: var(--color-danger-light);
-  color: var(--color-danger-dark);
+.team-health-alert-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
 }
 
-.team-health-alert-card.error {
-  border-color: var(--color-warning);
-  background-color: var(--color-warning-light);
-  color: var(--color-warning-dark);
+.team-health-alert-card.critical::before {
+  background-color: var(--color-danger);
 }
 
-.team-health-alert-card.warning {
-  border-color: var(--color-warning);
-  background-color: var(--color-warning-light);
-  color: var(--color-warning-dark);
+.team-health-alert-card.error::before {
+  background-color: var(--color-warning);
 }
 
-.team-health-alert-card.info {
-  border-color: var(--color-primary);
-  background-color: var(--color-primary-light);
-  color: var(--color-primary-dark);
+.team-health-alert-card.warning::before {
+  background-color: var(--color-warning);
+}
+
+.team-health-alert-card.info::before {
+  background-color: var(--color-primary);
 }
 
 .team-health-alert-top {
@@ -459,25 +463,34 @@
 
 /* Recommendation Card */
 .team-health-recommendation-card {
-  border: 1px solid;
+  background-color: var(--color-background-card);
+  box-shadow: var(--shadow-md);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-md);
+  border: 1px solid var(--color-border);
   position: relative;
 }
 
-.team-health-recommendation-card.high {
-  border-color: var(--color-danger);
-  background-color: var(--color-danger-light);
+.team-health-recommendation-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
 }
 
-.team-health-recommendation-card.medium {
-  border-color: var(--color-warning);
-  background-color: var(--color-warning-light);
+.team-health-recommendation-card.high::before {
+  background-color: var(--color-danger);
 }
 
-.team-health-recommendation-card.low {
-  border-color: var(--color-success);
-  background-color: var(--color-success-light);
+.team-health-recommendation-card.medium::before {
+  background-color: var(--color-warning);
+}
+
+.team-health-recommendation-card.low::before {
+  background-color: var(--color-success);
 }
 
 .team-health-recommendation-top {
